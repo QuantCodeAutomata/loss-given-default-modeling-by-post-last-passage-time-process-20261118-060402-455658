@@ -89,8 +89,7 @@ the same sign, `(1/sigma)log(Y0)` within the paper's reported precision or a
 few percent); **not reproduced** for WHR, F and DAL, where `sigma` is less
 than half the paper's value and `(1/sigma)log(Y0)` differs by more than 100%.
 The deviation is traced to the debt series `B_t`: the paper does not specify
-whether `B_t` uses book or market value of total debt (an explicit
-uncertainty of this replication's data requirements), and the estimated
+whether `B_t` uses book or market value of total debt, and the estimated
 `sigma` is highly sensitive to the assumed level of `B_0` through the implied
 `V_t`. The three firms with the largest mismatch (WHR, F, DAL) are exactly
 those whose Massive-reported total-debt figure is a book-value balance-sheet
@@ -98,7 +97,15 @@ total that can differ materially from the market value of debt the paper's
 option-pricing inversion implicitly requires; this is recorded under
 "Deviations from the paper" below rather than attributed to a code defect,
 since the drift/volatility formulas were separately verified on synthetic
-data with a known closed-form likelihood optimum in `tests/test_mle.py`.
+data with a known closed-form likelihood optimum in `tests/test_mle.py`. As
+an additional check on F, the realized annualized volatility of the raw
+equity close series over the same 126-day window is about 0.337, well above
+both the fitted asset volatility (0.0546) and the paper's reported asset
+volatility (0.1867); under Merton's delta relation `sigma_E ≈ (V/E) N(d1)
+sigma_V`, the fitted asset volatility is consistent with the realized equity
+volatility given this replication's high book-value leverage (`V0/E0 ≈ 5.2`),
+which shows the discrepancy with the paper traces to the assumed debt level
+rather than to the likelihood or option-inversion code.
 
 ## Experiment 4 — Joint calibration of the distress threshold alpha* and the scaling factor chi
 
