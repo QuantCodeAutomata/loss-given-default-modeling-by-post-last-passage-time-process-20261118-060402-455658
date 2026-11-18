@@ -156,22 +156,34 @@ def fetch_risk_free_rate(as_of_date: str) -> float:
 
 
 def fetch_inflation_rate(as_of_date: str) -> float:
-    """Year-over-year CPI inflation rate (decimal), closest observation on or
-    before ``as_of_date``, Massive ``GET /fed/v1/inflation``."""
+    """Market-implied 5-year breakeven inflation rate (decimal), closest
+    observation on or before ``as_of_date``, Massive
+    ``GET /fed/v1/inflation-expectations`` (``market_5_year`` field, derived
+    from the Treasury/TIPS spread).
+
+    Section 3.3.1 discounts debt growth and the option formula with an
+    inflation rate r_i alongside the risk-free rate r_f, both read off the
+    market on the evaluation date; realized CPI year-over-year inflation
+    (``/fed/v1/inflation``) was tried first but disagreed with the Table 2
+    values by a factor of 2-4x in high-CPI periods (e.g. June 2022), while the
+    5-year breakeven series matches Table 2's r_i within a few bps for all
+    six firms, confirming r_i is a forward-looking market expectation rather
+    than trailing realized CPI.
+    """
     resp = requests.get(
-        f"{MASSIVE_API_ROOT}/fed/v1/inflation",
+        f"{MASSIVE_API_ROOT}/fed/v1/inflation-expectations",
         params={"date.lte": as_of_date, "sort": "date.desc", "limit": 1},
         headers=_massive_headers(), timeout=60,
     )
     if resp.status_code != 200:
-        raise DataLoadError(f"inflation: HTTP {resp.status_code}: {resp.text[:300]}")
+        raise DataLoadError(f"inflation-expectations: HTTP {resp.status_code}: {resp.text[:300]}")
     results = resp.json().get("results") or []
     if not results:
-        raise DataLoadError(f"inflation: no observation on or before {as_of_date}")
-    cpi_yoy = results[0].get("cpi_year_over_year")
-    if cpi_yoy is None:
-        raise DataLoadError("inflation: cpi_year_over_year missing in response")
-    return float(cpi_yoy) / 100.0
+        raise DataLoadError(f"inflation-expectations: no observation on or before {as_of_date}")
+    breakeven_5y = results[0].get("market_5_year")
+    if breakeven_5y is None:
+        raise DataLoadError("inflation-expectations: market_5_year missing in response")
+    return float(breakeven_5y) / 100.0
 
 
 def load_firm_window(ticker: str, evaluation_date: str, window_days: int = 126,

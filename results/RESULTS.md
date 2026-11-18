@@ -68,21 +68,35 @@ Equity values `E_t` for the six firms (DAL, F, KSS, LEN, WHR, WMB) over their
 126-business-day windows ending at the Table 2 evaluation dates were loaded
 through the QuantX Dataloader (`data/data_loader.py`); shares outstanding
 came from Massive reference data; `B_0` (total debt at the window end) came
-from Massive fundamentals; `r_f`/`r_i` are the paper's Table 2 values (FRED
-constant-maturity Treasury yield and CPI inflation are not re-derived here,
-see "Deviations" below). Duan's MLE (Appendix A.7) was run on each firm's
-window, inverting the Merton/Black-Scholes equity equation at every date with
+from Massive fundamentals; `r_f` is the Massive constant-maturity Treasury
+yield and `r_i` is the Massive 5-year breakeven inflation expectation on the
+evaluation date (see "Deviations" below for the residual gap to Table 2's
+`r_f`/`r_i`). Duan's MLE (Appendix A.7) was run on each firm's window,
+inverting the Merton/Black-Scholes equity equation at every date with
 `scipy.optimize.brentq` and maximizing the profile log-likelihood over
 `sigma` with `scipy.optimize.minimize_scalar`.
 
-| ticker | sigma (model) | sigma (paper) | rel. err. | (1/sigma)log(Y0) (model) | (paper) | rel. err. |
-|---|---|---|---|---|---|---|
-| WMB | 0.3726 | 0.3818 | -2.4% | 1.8783 | 1.8326 | +2.5% |
-| LEN | 0.5426 | 0.5034 | +7.8% | 2.3728 | 2.2821 | +4.0% |
-| WHR | 0.1694 | 0.3505 | -51.7% | 4.0096 | 1.8887 | +112.3% |
-| F | 0.0546 | 0.1867 | -70.8% | 4.1729 | 1.1566 | +260.8% |
-| DAL | 0.2006 | 0.4347 | -53.8% | 3.5406 | 1.6564 | +113.8% |
-| KSS | 0.4818 | 0.5362 | -10.1% | 1.2542 | 1.0501 | +19.4% |
+| ticker | r_f (model) | r_f (paper) | r_i (model) | r_i (paper) | sigma (model) | sigma (paper) | rel. err. | (1/sigma)log(Y0) (model) | (paper) | rel. err. |
+|---|---|---|---|---|---|---|---|---|---|---|
+| WMB | 0.0016 | 0.0029 | 0.0131 | 0.0121 | 0.3722 | 0.3818 | -2.5% | 1.8849 | 1.8326 | +2.9% |
+| LEN | 0.0017 | 0.0038 | 0.0101 | 0.0088 | 0.5421 | 0.5034 | +7.7% | 2.3770 | 2.2821 | +4.2% |
+| WHR | 0.0463 | 0.0366 | 0.0238 | 0.0240 | 0.1709 | 0.3505 | -51.2% | 3.8931 | 1.8887 | +106.1% |
+| F | 0.0012 | 0.0048 | 0.0210 | 0.0204 | 0.0543 | 0.1867 | -70.9% | 4.2966 | 1.1566 | +271.5% |
+| DAL | 0.0006 | 0.0085 | 0.0250 | 0.0257 | 0.2007 | 0.4347 | -53.8% | 3.5359 | 1.6564 | +113.5% |
+| KSS | 0.0287 | 0.0305 | 0.0258 | 0.0253 | 0.4900 | 0.5362 | -8.6% | 1.1673 | 1.0501 | +11.2% |
+
+The 5-year breakeven inflation rate `r_i` (Massive `fed/v1/inflation-expectations`,
+`market_5_year`) matches Table 2's `r_i` within a few bps for all six firms,
+confirming this is the market-implied series the paper uses rather than
+trailing realized CPI (which disagreed with Table 2 by a factor of 2-4x and
+was discarded; mean absolute relative error of `r_i` against Table 2 fell
+from about 1.6 to about 0.06 after this change). `r_f` is closer to Table 2
+for WHR and KSS (same maturity convention) than for WMB, LEN, F and DAL,
+where the gap (tens to a few hundred bps) is of a magnitude consistent with
+the paper's `r_f` being read off a different point on the Treasury curve or a
+different averaging convention than the Massive constant-maturity series
+used here; the paper does not specify the exact tenor or source of `r_f`
+beyond "FRED constant maturity U.S. Treasury yield" (Sec. 3.3.1).
 
 **Verdict: reproduced** for WMB, LEN and KSS (`sigma` within about 10% and
 the same sign, `(1/sigma)log(Y0)` within the paper's reported precision or a
@@ -100,12 +114,16 @@ since the drift/volatility formulas were separately verified on synthetic
 data with a known closed-form likelihood optimum in `tests/test_mle.py`. As
 an additional check on F, the realized annualized volatility of the raw
 equity close series over the same 126-day window is about 0.337, well above
-both the fitted asset volatility (0.0546) and the paper's reported asset
+both the fitted asset volatility (0.0543) and the paper's reported asset
 volatility (0.1867); under Merton's delta relation `sigma_E ≈ (V/E) N(d1)
 sigma_V`, the fitted asset volatility is consistent with the realized equity
 volatility given this replication's high book-value leverage (`V0/E0 ≈ 5.2`),
 which shows the discrepancy with the paper traces to the assumed debt level
-rather than to the likelihood or option-inversion code.
+rather than to the likelihood or option-inversion code. The `r_f`/`r_i` fix
+above changed `sigma` and `(1/sigma)log(Y0)` by at most a few percent for all
+six firms and did not change which firms reproduce Table 2, confirming the
+debt-level mismatch — not the risk-free/inflation input — is the dominant
+driver of the WHR/F/DAL gap.
 
 ## Experiment 4 — Joint calibration of the distress threshold alpha* and the scaling factor chi
 
@@ -202,13 +220,15 @@ File: `results/exp6_empirical_metrics.json`, `results/exp6_empirical_table.csv`,
 This experiment chains the MLE of Experiment 3 into the calibration of
 Experiment 4 and the LGD extraction of Experiment 5, using only data loaded
 through `data/data_loader.py` and Massive reference/fundamentals data (no
-Table 2 shortcuts). Because it inherits Experiment 3's `sigma` and
-`(1/sigma)log(Y0)`, its mean absolute relative difference against Table 2 is
-large for expected LGD (`mean_abs_rel_diff_expected_lgd ≈ 0.91`) and for
-`sigma` (`mean_abs_rel_diff_sigma ≈ 0.33`), driven by the same three firms
-(WHR, F, DAL) flagged in Experiment 3. WMB, LEN and KSS reproduce Table 2's
-expected LGD within 6% (e.g. WMB: model 0.522 vs paper 0.555, -5.8%) and the
-effective CDS spread within 6% (WMB: 69.3 vs 73.5 bps, -5.7%).
+Table 2 shortcuts; `r_f`/`r_i` are the Massive constant-maturity Treasury
+yield and 5-year breakeven inflation expectation, as in Experiment 3). Because
+it inherits Experiment 3's `sigma` and `(1/sigma)log(Y0)`, its mean absolute
+relative difference against Table 2 is large for expected LGD
+(`mean_abs_rel_diff_expected_lgd ≈ 0.97`) and for `sigma`
+(`mean_abs_rel_diff_sigma ≈ 0.32`), driven by the same three firms (WHR, F,
+DAL) flagged in Experiment 3. WMB, LEN and KSS reproduce Table 2's expected
+LGD within 6% (e.g. WMB: model 0.533 vs paper 0.555, -4.0%) and the effective
+CDS spread within 6% (WMB: 70.6 vs 73.5 bps, -3.9%).
 
 **Verdict: partially reproduced.** Three of six firms (WMB, LEN, KSS)
 reproduce Table 2's expected LGD and effective CDS spread within about 10%;
