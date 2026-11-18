@@ -3,8 +3,27 @@ Figure 3), reusing the calibration and LGD modules at each tenor T.
 """
 from __future__ import annotations
 
+import numpy as np
+
 from src.calibration import calibrate_chi
 from src.lgd import expected_lgd, model_implied_spread
+
+
+def flat_hazard_pd(T: float, pd_ref: float, T_ref: float = 5.0) -> float:
+    """Default probability at tenor T implied by a constant (flat) hazard
+    rate calibrated to the reference-tenor market default probability
+    ``pd_ref`` at ``T_ref``: PD(T) = 1 - exp(-eta*T) with
+    eta = -log(1-pd_ref)/T_ref.
+
+    Section 4.2 reports the market default probability only at the 5-year
+    horizon (Table 2); the paper does not specify market default
+    probabilities at the other tenors of Figure 3's term structure, so this
+    flat-intensity extrapolation is an explicit assumption of this
+    replication, not a value taken from the paper (see
+    results/RESULTS.md, "Deviations from the paper").
+    """
+    eta = -np.log(1.0 - pd_ref) / T_ref
+    return 1.0 - np.exp(-eta * T)
 
 
 def calibrate_term_structure(

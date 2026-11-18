@@ -40,6 +40,15 @@ def default_probability(T: float, alpha_star: float, x0: float, M_Q: float, eta_
     The integrand's Erf/Erfc terms cancel exactly as nu -> T (verified by
     L'Hopital / direct limit), so no singularity handling beyond a tiny
     epsilon near the upper limit is required.
+
+    The exponential weight eta_Q*exp(-eta_Q*nu) becomes arbitrarily peaked
+    near nu=0 as eta_Q grows (its effective width is 1/eta_Q), which
+    ``scipy.integrate.quad`` under-resolves at its default node placement for
+    the large eta_Q values explored by ``calibrate_chi`` (q can run into the
+    tens or hundreds). We remove this eta_Q-dependent peak width with the
+    substitution u = eta_Q*nu (du = eta_Q*dnu), which turns the weight into
+    the eta_Q-independent exp(-u) and restores the strict monotonicity in
+    chi/q that the paper proves for (D/A)_Model (Sec. 3.3.4, page 14).
     """
     a = alpha_star - x0
     abs_a = abs(a)
@@ -48,17 +57,21 @@ def default_probability(T: float, alpha_star: float, x0: float, M_Q: float, eta_
 
     prefactor = np.exp(M_Q * (a - abs_a)) / (2.0 * M_Q * G_aa)
 
-    def integrand(nu: float) -> float:
-        tau = T - nu
+    def bracket_of_tau(tau: float) -> float:
         if tau < 1e-12:
-            return 0.0  # the bracket term -> 0 as nu -> T
+            return 0.0  # the bracket term -> 0 as nu -> T, i.e. tau -> 0
         sqrt2tau = np.sqrt(2.0 * tau)
         term_erf = erf((M_Q * tau - abs_a) / sqrt2tau)
         term_erfc = np.exp(2.0 * M_Q * abs_a) * erfc((M_Q * tau + abs_a) / sqrt2tau)
-        bracket = 1.0 + term_erf - term_erfc
-        return bracket * eta_Q * np.exp(-eta_Q * nu)
+        return 1.0 + term_erf - term_erfc
 
-    integral, _ = quad(integrand, 0.0, T, limit=200)
+    def integrand_u(u: float) -> float:
+        nu = u / eta_Q
+        tau = T - nu
+        return bracket_of_tau(tau) * np.exp(-u)
+
+    u_upper = min(eta_Q * T, 60.0)  # exp(-u) < 1e-26 beyond u=60
+    integral, _ = quad(integrand_u, 0.0, u_upper, limit=200)
     q_from_hazard = prefactor * integral
     q_from_last_passage = (1.0 - G_x0_a / G_aa) * (1.0 - np.exp(-eta_Q * T))
     q_default = q_from_hazard + q_from_last_passage

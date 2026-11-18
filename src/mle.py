@@ -26,14 +26,30 @@ def bs_equity_from_asset(V: float, B: float, sigma: float, r_i: float, T_m: floa
 
 def implied_asset_value(E: float, B: float, sigma: float, r_i: float, T_m: float) -> float:
     """Invert the Black-Scholes equity formula for the unobserved asset value V,
-    given observed equity E and debt B, by bracketing root search (Appendix A.7)."""
+    given observed equity E and debt B, by bracketing root search (Appendix A.7).
+
+    bs_equity_from_asset(V, ...) is strictly increasing in V, with
+    bs_equity_from_asset(V, ...) -> 0 as V -> 0 and -> +inf as V -> +inf, so a
+    root always exists in (0, +infinity); for high leverage or high sigma the
+    at-the-money value bs_equity_from_asset(B, ...) can already exceed E, so
+    the lower end of the bracket must be searched from near 0, not from B.
+    """
     def f(V):
         return bs_equity_from_asset(V, B, sigma, r_i, T_m) - E
-    lo = max(E, B) * 1.0000001
-    hi = max(E, B) * 50.0
-    # expand the upper bracket until f changes sign
-    while f(hi) < 0:
+    lo = B * 1e-6
+    for _ in range(100):
+        if f(lo) <= 0:
+            break
+        lo /= 2.0  # expand the bracket downward until f(lo) <= 0
+    else:
+        raise RuntimeError(f"implied_asset_value: no lower bracket found (E={E}, B={B}, sigma={sigma})")
+    hi = max(E, B) * 2.0
+    for _ in range(100):
+        if f(hi) >= 0:
+            break
         hi *= 2.0
+    else:
+        raise RuntimeError(f"implied_asset_value: no upper bracket found (E={E}, B={B}, sigma={sigma})")
     return brentq(f, lo, hi, xtol=1e-10, maxiter=200)
 
 

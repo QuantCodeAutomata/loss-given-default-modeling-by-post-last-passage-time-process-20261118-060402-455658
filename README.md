@@ -9,9 +9,9 @@ model built on the normalized asset-to-debt ratio process (Section 3), and
 the calibration to six NYSE-listed firms (Section 4), together with the
 numerical experiments described below.
 
-Status: implementation in progress. This README is updated as experiments
-are added; see `results/RESULTS.md` for the final comparison against the
-paper's reported numbers.
+See `results/RESULTS.md` for the full comparison of every experiment against
+the paper's reported numbers, including deviations and items not
+reproduced.
 
 ## Setup
 
@@ -37,11 +37,17 @@ python -m pytest -m "not market_data"
 
 ```bash
 python -m exp.exp1   # Laplace transform of the occupation time before the last passage time (Prop. 2.1)
+python -m exp.exp2   # Post-last-passage process dynamics and entrance-boundary verification (Prop. 2.2-2.3)
+python -m exp.exp3   # Duan's MLE of asset volatility/drift from equity and debt data (Sec. 3.3.1, App. A.7)
+python -m exp.exp4   # Joint calibration of alpha* and chi (Sec. 3.3.2-3.3.4, Prop. 3.1)
+python -m exp.exp5   # Endogenous LGD distribution and model-implied spread (Corollary 3.2)
+python -m exp.exp6   # Full pipeline (exp3 -> exp4 -> exp5) on real data for all six firms
+python -m exp.exp7   # Occupation time above alpha* before killing at c* (App. A.5, Figure 2)
+python -m exp.exp8   # Term structure of CDS spreads for DAL (Figure 3)
 ```
 
-Further experiments (`exp2` through `exp8`) are being added; each will be
-runnable the same way, `python -m exp.<name>`, and documented here once
-implemented.
+Each script writes its tables, metrics (JSON) and plots directly to
+`results/`, overwriting the files from any previous run.
 
 ## Layout
 
@@ -54,5 +60,15 @@ implemented.
 - `data/` — `data_loader.py` loads real market data for experiments 3 and 6
   through the QuantX Dataloader and Massive REST APIs; no data is generated
   synthetically for persistence (downloaded data is never committed).
-- `tests/` — unit tests of `src/` on small/synthetic inputs.
+- `tests/` — unit tests of `src/` on small/synthetic inputs, plus a
+  market-data-marked test of the loader on a short real slice.
 - `results/` — tables, plots and `RESULTS.md` produced by the experiments.
+
+## Reproduce everything
+
+```bash
+./reproduce.sh
+```
+
+runs the test suite and every experiment in sequence, writing all outputs
+to `results/`.
