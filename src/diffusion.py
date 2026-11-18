@@ -153,3 +153,24 @@ def last_passage_and_occupation_time(times: np.ndarray, paths: np.ndarray, alpha
             continue
         occupation_time[i] = above[i, : last_idx[i] + 1].sum() * dt
     return lambda_alpha, occupation_time
+
+
+def monte_carlo_occupation_time(x0: float, M: float, dt: float, t_max: float, n_paths: int,
+                                 rng: np.random.Generator, alpha: float,
+                                 batch_size: int = 2000) -> np.ndarray:
+    """Monte Carlo occupation time lambda_alpha^A, processed in path batches so
+    that memory use stays bounded regardless of n_paths * (t_max/dt).
+
+    Equivalent to calling ``simulate_bm_with_drift`` once on all paths and then
+    ``last_passage_and_occupation_time``, but never materializes more than
+    ``batch_size`` full paths at a time.
+    """
+    occ = np.empty(n_paths)
+    done = 0
+    while done < n_paths:
+        batch = min(batch_size, n_paths - done)
+        times, paths = simulate_bm_with_drift(x0, M, dt, t_max, batch, rng)
+        _, occ_batch = last_passage_and_occupation_time(times, paths, alpha)
+        occ[done:done + batch] = occ_batch
+        done += batch
+    return occ

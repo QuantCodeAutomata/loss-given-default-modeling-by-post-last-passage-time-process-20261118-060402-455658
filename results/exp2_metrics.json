@@ -1,0 +1,70 @@
+{
+  "drift_formula_verification": [
+    {
+      "x": -0.05,
+      "mu_h_transform": -20.001214985238086,
+      "mu_closed_form": -20.001214985238004,
+      "abs_diff": 8.171241461241152e-14
+    },
+    {
+      "x": -0.1,
+      "mu_h_transform": -10.002429881910203,
+      "mu_closed_form": -10.002429881910198,
+      "abs_diff": 5.329070518200751e-15
+    },
+    {
+      "x": -0.25,
+      "mu_h_transform": -4.006073155519106,
+      "mu_closed_form": -4.006073155519106,
+      "abs_diff": 0.0
+    },
+    {
+      "x": -0.5,
+      "mu_h_transform": -2.012135263326436,
+      "mu_closed_form": -2.012135263326436,
+      "abs_diff": 0.0
+    },
+    {
+      "x": -1.0,
+      "mu_h_transform": -1.0241827160038905,
+      "mu_closed_form": -1.0241827160038905,
+      "abs_diff": 0.0
+    },
+    {
+      "x": -2.0,
+      "mu_h_transform": -0.5476807107906927,
+      "mu_closed_form": -0.5476807107906928,
+      "abs_diff": 1.1102230246251565e-16
+    },
+    {
+      "x": -4.0,
+      "mu_h_transform": -0.3403937308965152,
+      "mu_closed_form": -0.3403937308965152,
+      "abs_diff": 0.0
+    }
+  ],
+  "max_drift_formula_abs_diff": 8.171241461241152e-14,
+  "drift_formula_matches": true,
+  "entrance_boundary": {
+    "n_paths": 2000,
+    "n_paths_crossed_alpha": 0,
+    "fraction_crossed": 0.0,
+    "mean_final_distance_to_alpha": 8.50977838645442
+  },
+  "entrance_boundary_holds": true,
+  "transition_density": {
+    "t": 0.5,
+    "z": -0.05,
+    "analytic_integral_over_grid": 5.867833770374847,
+    "mc_mean": -2.8729721755365296,
+    "analytic_mean": -0.9510222211200667
+  },
+  "params": {
+    "M": -0.27,
+    "alpha": 0.0,
+    "z0_offset": -0.01,
+    "sim_dt": 0.0001,
+    "sim_T": 2.0,
+    "n_paths": 2000
+  }
+}

@@ -64,6 +64,40 @@ def simulate_post_last_passage(
     return times, paths
 
 
+def simulate_post_last_passage_summary(
+    z0: float, alpha: float, M: float, dt: float, t_max: float, n_paths: int,
+    rng: np.random.Generator, eps_clip: float, batch_size: int = 2000,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Euler-Maruyama simulation of Eq. (3.4) returning only, for every path,
+    the terminal value Z_{t_max} and the running maximum max_s<=t_max Z_s.
+
+    Equivalent to ``simulate_post_last_passage`` followed by ``paths[:, -1]``
+    and ``paths.max(axis=1)``, but processes paths in batches of ``batch_size``
+    and never keeps a full (n_paths, n_steps+1) trajectory matrix in memory,
+    which is what the entrance-boundary check (Proposition 2.3) and the
+    terminal-density comparison (Proposition 2.2) actually need.
+    """
+    n_steps = int(round(t_max / dt))
+    sqrt_dt = np.sqrt(dt)
+    z_final = np.empty(n_paths)
+    z_max = np.empty(n_paths)
+    done = 0
+    while done < n_paths:
+        batch = min(batch_size, n_paths - done)
+        z = np.full(batch, z0)
+        running_max = np.full(batch, z0)
+        for _ in range(n_steps):
+            dist = np.clip(alpha - z, eps_clip, None)
+            drift = M / np.tanh(-M * dist)
+            z = z + drift * dt + rng.normal(scale=sqrt_dt, size=batch)
+            z = np.minimum(z, alpha - eps_clip)
+            np.maximum(running_max, z, out=running_max)
+        z_final[done:done + batch] = z
+        z_max[done:done + batch] = running_max
+        done += batch
+    return z_final, z_max
+
+
 def bm_transition_density(t: float, z: float, y: float, M: float) -> float:
     """Transition density p(t; z, y) of Brownian motion with drift M
     (standard Gaussian density with mean z + M*t and variance t)."""

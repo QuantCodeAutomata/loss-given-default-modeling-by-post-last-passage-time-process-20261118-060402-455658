@@ -1,0 +1,63 @@
+{
+  "laplace_validation": [
+    {
+      "q": 0.01,
+      "analytic": 0.9232623531832171,
+      "monte_carlo": 0.9261887604104401,
+      "mc_std_error": 0.0006299289635794034,
+      "abs_diff": 0.002926407227222927,
+      "within_3se": false
+    },
+    {
+      "q": 0.1,
+      "analytic": 0.6006792341571145,
+      "monte_carlo": 0.6021644216134721,
+      "mc_std_error": 0.0021832875645652235,
+      "abs_diff": 0.0014851874563575063,
+      "within_3se": true
+    },
+    {
+      "q": 0.5,
+      "analytic": 0.28198166224110816,
+      "monte_carlo": 0.2813586095790787,
+      "mc_std_error": 0.0021905334019806672,
+      "abs_diff": 0.0006230526620294441,
+      "within_3se": true
+    },
+    {
+      "q": 1.0,
+      "analytic": 0.17597456489161173,
+      "monte_carlo": 0.17513139888813237,
+      "mc_std_error": 0.0018302560194835232,
+      "abs_diff": 0.000843166003479362,
+      "within_3se": true
+    },
+    {
+      "q": 2.0,
+      "analytic": 0.09847053232956844,
+      "monte_carlo": 0.09766774881362755,
+      "mc_std_error": 0.001372277708571587,
+      "abs_diff": 0.0008027835159408886,
+      "within_3se": true
+    },
+    {
+      "q": 5.0,
+      "analytic": 0.036712117592816,
+      "monte_carlo": 0.03595042033631596,
+      "mc_std_error": 0.0007740049075509491,
+      "abs_diff": 0.0007616972565000421,
+      "within_3se": true
+    }
+  ],
+  "all_within_3se": false,
+  "no_killing_pdf_integral": 0.8111993457927479,
+  "killing_boundary_pdf_integral": 0.8941982431903733,
+  "params": {
+    "M": -0.27,
+    "alpha": 0.0,
+    "x0": 0.5,
+    "c": -1.0,
+    "mc_paths": 20000,
+    "mc_dt": 0.002
+  }
+}

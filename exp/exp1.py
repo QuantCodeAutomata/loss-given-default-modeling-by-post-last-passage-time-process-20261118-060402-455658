@@ -23,10 +23,9 @@ import matplotlib.pyplot as plt
 from src import config
 from src.diffusion import (
     invert_laplace_pdf,
-    last_passage_and_occupation_time,
+    monte_carlo_occupation_time,
     occupation_time_laplace_no_killing,
     occupation_time_laplace_with_killing,
-    simulate_bm_with_drift,
 )
 
 RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
@@ -36,11 +35,10 @@ def validate_laplace_transform() -> list[dict]:
     """Compare the analytical Laplace transform (2.4) at a grid of q values
     against the Monte Carlo estimate of E[exp(-q * occupation_time)]."""
     rng = np.random.default_rng(0)
-    times, paths = simulate_bm_with_drift(
+    occ = monte_carlo_occupation_time(
         config.EXP1_X0, config.EXP1_M, config.EXP1_MC_DT, config.EXP1_MC_T_MAX,
-        config.EXP1_MC_PATHS, rng,
+        config.EXP1_MC_PATHS, rng, config.EXP1_ALPHA, batch_size=config.EXP1_MC_BATCH_SIZE,
     )
-    _, occ = last_passage_and_occupation_time(times, paths, config.EXP1_ALPHA)
 
     rows = []
     for q in config.EXP1_Q_GRID:
@@ -66,11 +64,10 @@ def occupation_time_pdf_no_killing() -> dict:
     pdf = invert_laplace_pdf(laplace_fn, t_grid)
 
     rng = np.random.default_rng(1)
-    times, paths = simulate_bm_with_drift(
+    occ = monte_carlo_occupation_time(
         config.EXP1_X0, config.EXP1_M, config.EXP1_MC_DT, config.EXP1_MC_T_MAX,
-        config.EXP1_MC_PATHS, rng,
+        config.EXP1_MC_PATHS, rng, config.EXP1_ALPHA, batch_size=config.EXP1_MC_BATCH_SIZE,
     )
-    _, occ = last_passage_and_occupation_time(times, paths, config.EXP1_ALPHA)
 
     integral = float(np.trapz(pdf, t_grid))
     fig, ax = plt.subplots(figsize=(7, 5))

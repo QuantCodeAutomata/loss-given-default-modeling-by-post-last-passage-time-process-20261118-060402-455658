@@ -17,6 +17,7 @@ EXP1_C = -1.0           # interior killing boundary c < alpha used for formula (
 EXP1_MC_PATHS = 20000   # Monte Carlo paths for occupation-time validation; not specified in the paper
 EXP1_MC_DT = 0.002      # Euler time step (years) for Monte Carlo simulation; not specified in the paper
 EXP1_MC_T_MAX = 60.0    # simulation horizon (years), long enough for the last-passage time to occur a.s.; not specified in the paper
+EXP1_MC_BATCH_SIZE = 1000  # path batch size for memory-bounded Monte Carlo (not a modeling parameter; not specified in the paper)
 EXP1_INVLAP_T_GRID_MAX = 15.0   # upper bound of the t-grid for the inverse Laplace transform PDF (Fig. 2 style grid, Sec. 4.2)
 EXP1_INVLAP_N_POINTS = 61       # number of points on the t-grid for the inverse Laplace PDF
 
@@ -32,6 +33,8 @@ EXP2_N_PATHS = 2000     # number of simulated paths for the entrance-boundary ch
 EXP2_EPS_CLIP = 1e-6    # minimum distance to alpha enforced in the Euler scheme to regularize coth(.) (numerical safeguard)
 EXP2_DENSITY_T = 0.5    # horizon t (years) at which the transition density p^{h_alpha}(t;z,y) is compared (Prop. 2.2)
 EXP2_DENSITY_Z = -0.05  # starting point z < alpha for the transition-density comparison
+EXP2_DENSITY_N_PATHS = 20000  # paths for the transition-density Monte Carlo histogram; not specified in the paper
+EXP2_MC_BATCH_SIZE = 1000  # path batch size for memory-bounded Monte Carlo (not a modeling parameter; not specified in the paper)
 
 # ---------------------------------------------------------------------------
 # Experiments 3-8: structural model calibrated to six NYSE firms (Table 2, Sec. 4)
