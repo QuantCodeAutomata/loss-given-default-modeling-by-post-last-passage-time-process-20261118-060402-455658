@@ -127,25 +127,49 @@ all six firms, isolating the calibration step from the MLE step above.
 
 The default-probability match (`rel. err. PD`) is exact for all six firms by
 construction of the root-finding on alpha* (Proposition 3.1's strict
-monotonicity in alpha* holds throughout). The premium-ratio match
-(`(D/A)_Model = S/0.6`, Eq. 3.13) is within the paper's own reported error
-band (0 to 5.83e-2, Table 2) for WMB, LEN, WHR, F and KSS. For DAL, `chi`
-saturates at the search bound (2000) without reaching the target premium
-ratio: scanning `(D/A)_Model` against `chi` on a slice (chi from 1 to 2000)
-shows it peaking near 436 bps around `chi ≈ 1-5` and then *decreasing* before
-slowly rising again, never approaching the 500 bps target implied by DAL's
-5-year CDS spread (299.96 bps) under the 60% recovery convention. This
-contradicts the paper's claim (page 14) that `(D/A)_Model` is strictly
-increasing in `chi` once alpha* is re-matched for each candidate `chi`; the
-cause was localized to this one firm (DAL has the most extreme risk-neutral
-drift `M^Q = -0.2764` and the largest Table 2 `chi = 229.51` of the six
-firms) but not resolved within the numerical-integration approach used here.
+monotonicity in alpha* holds throughout), and the calibrated alpha* itself
+matches Table 2 closely for all six firms, including DAL (-0.2815 here vs.
+-0.2822 in Table 2). The premium-ratio match (`(D/A)_Model = S/0.6`, Eq.
+3.13) is within the paper's own reported error band (0 to 5.83e-2, Table 2)
+for WMB, LEN, WHR, F and KSS. For DAL, `chi` saturates at the search bound
+(2000) without reaching the target premium ratio: scanning `(D/A)_Model`
+against `chi` (chi from 1 to 2000, with alpha* re-matched to the market
+default probability at every candidate chi, as Eq. 3.13's procedure
+requires) shows it peaking near 436 bps around `chi ≈ 1-5`, dipping to about
+422 bps near `chi ≈ 20`, then rising again but flattening at an asymptote of
+about 425 bps that chi up to 2000 does not exceed — never approaching the
+500 bps target implied by DAL's 5-year CDS spread (299.96 bps) under the 60%
+recovery convention. This contradicts the paper's claim (page 14) that
+`(D/A)_Model` is strictly increasing in `chi` once alpha* is re-matched for
+each candidate `chi`. The cause was localized to this one firm and is not a
+numerical-integration artefact: (i) `default_probability`'s hazard-rate
+integral was checked against a brute-force re-derivation of the same
+quadrature without the eta_Q-rescaling substitution, matching to 12 digits;
+(ii) the Green-function identity `G(x,y) = 1/|M^Q|` for `y <= x` (used for
+`G(alpha*,alpha*)` and `G(x0,alpha*)`, which coincide whenever `x0 >= alpha*`
+as Assumption 1 requires) was confirmed algebraically, not just numerically;
+(iii) the `(D/A)_Model` value at DAL's own Table-2 `(alpha*, chi, q)` was
+reproduced to 4 significant figures (424.65 bps) by an independent
+4,000-point trapezoidal-rule integration of Remark 3.1's `D_Model`/`A_Model`
+integrands, ruling out `scipy.integrate.quad`'s adaptive-node placement as
+the cause; (iv) the same code applied to F and WMB (whose Table 2 relative
+errors are -1.09e-4 and -1.53e-3, i.e. the paper's own calibration is closest
+to exact for those two) reproduces `(D/A)_Model` within a few bps of the
+paper's value across a wide range of `chi`, so the formula and search
+procedure are not mis-specified in general. DAL is the firm with the most
+extreme risk-neutral drift (`M^Q = -0.2764`) and the largest Table 2 `chi`
+(229.51) of the six, and its `(D/A)_Model(chi)` curve has a strictly lower
+supremum than the paper's reported value for every chi tried, a discrepancy
+that persists after ruling out the above numerical causes and that this
+replication was not able to resolve further.
 
 **Verdict: reproduced** for WMB, LEN, WHR, F and KSS (default probability
 exact, premium ratio within the paper's own reported error range); **not
 reproduced** for DAL (premium ratio off by 14.97%, exceeding the paper's
-0-5.83% range, with the specific failure mode — non-monotonic `(D/A)_Model`
-in `chi` — identified above but not fixed).
+0-5.83% range; the specific failure mode — a sub-500-bps supremum of
+`(D/A)_Model` over chi — was localized and the numerical-integration
+hypothesis for it was ruled out as described above, but the root cause
+relative to the paper's own DAL figure was not identified).
 
 ## Experiment 5 — Endogenous LGD distribution and model-implied spread
 
